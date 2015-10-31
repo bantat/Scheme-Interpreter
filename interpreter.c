@@ -61,11 +61,34 @@ Value *lookUpSymbol(Value *symbol, Frame *frame) {
 }
 
 Value *evalIf(Value *args, Frame *frame) {
-    //...
+    assert(args->type == CONS_TYPE);
+    assert(cdr(args)->type == CONS_TYPE);
+    assert(cdr(cdr(args))->type == CONS_TYPE);
+    
+    Value *bool_exp = eval(car(args),frame);
+    true_result = car(cdr(args));
+    false_result = car(cdr(cdr(args)));
+    if (bool_exp->type == BOOL_TYPE) {
+        if (bool_exp->i = 1) {
+            return eval(true_result, frame);
+        }
+        else {
+            return eval(false_result, frame);
+        }
+    }
+    else {
+        evaluationError();
+    }          
 }
 
 Value *evalLet(Value *args, Frame *frame) {
-    //...
+    Frame *new_frame;
+    new_frame->parent = frame;
+    Value *new_bindings = car(args);
+    
+    new_frame->bindings = new_bindings;
+    
+    return eval(car(cdr(args)),new_frame);
 }
 
 Value *eval(Value *tree, Frame *frame) {
