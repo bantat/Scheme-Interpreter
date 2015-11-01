@@ -188,8 +188,10 @@ int is_space(char input) {
     if (input == ' ') {
         return 1;
     }
+    else if (input == '\n') {
+        return 1;
+    }
     return 0;
-    
 }
 
 // Read all of the input from stdin, and return a linked list consisting of the
