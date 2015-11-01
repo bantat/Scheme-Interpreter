@@ -1,6 +1,16 @@
 /* interpreter.c - Program for interpreting Scheme code using C              */
 /* By Tore Banta & Charlie Sarano                                            */
 
+#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "linkedlist.h"
+#include "talloc.h"
+#include "interpreter.h"
+#include "value.h"
+#include "parser.h"
+
 void interpret(Value *tree) {
     Frame *global = talloc(sizeof(Frame));
     while ((*tree).type != NULL_TYPE) {
@@ -10,7 +20,7 @@ void interpret(Value *tree) {
         
         switch ((*result).type) {
             case BOOL_TYPE:
-                if ((*car_val).i == 0) {
+                if ((*result).i == 0) {
                     printf("#f\n");
                 }
                 else {
@@ -18,16 +28,16 @@ void interpret(Value *tree) {
                 }
                 break;
             case INT_TYPE:
-                printf("%i\n", (*car_val).i);
+                printf("%i\n", (*result).i);
                 break;
             case DOUBLE_TYPE:
-                printf("%f\n", (*car_val).d);
+                printf("%f\n", (*result).d);
                 break;
             case STR_TYPE:
-                printf("\"%s\"\n", (*car_val).s);
+                printf("\"%s\"\n", (*result).s);
                 break;
             case SYMBOL_TYPE:
-                printf("%s\n", (*car_val).s);
+                printf("%s\n", (*result).s);
                 break;
         }
         
@@ -42,7 +52,9 @@ void evaluationError() {
 
 Value *lookUpSymbol(Value *symbol, Frame *frame) {
     while (frame != NULL) {
-        Value *bindings = (*frame).bindings;
+        Value *bindings = frame->bindings;
+        /*printf("\n");
+        printTree(bindings);*/
         while ((*bindings).type != NULL_TYPE) {
             Value *symbol1_cons = car(bindings);
             Value *symbol1 = car(symbol1_cons);
@@ -58,6 +70,7 @@ Value *lookUpSymbol(Value *symbol, Frame *frame) {
         frame = frame->parent;
     }
     evaluationError();
+    return symbol;
 }
 
 Value *evalIf(Value *args, Frame *frame) {
@@ -66,10 +79,10 @@ Value *evalIf(Value *args, Frame *frame) {
     assert(cdr(cdr(args))->type == CONS_TYPE);
     
     Value *bool_exp = eval(car(args),frame);
-    true_result = car(cdr(args));
-    false_result = car(cdr(cdr(args)));
+    Value *true_result = car(cdr(args));
+    Value *false_result = car(cdr(cdr(args)));
     if (bool_exp->type == BOOL_TYPE) {
-        if (bool_exp->i = 1) {
+        if (bool_exp->i == 1) {
             return eval(true_result, frame);
         }
         else {
@@ -78,51 +91,59 @@ Value *evalIf(Value *args, Frame *frame) {
     }
     else {
         evaluationError();
-    }          
+    }
+    return args;
 }
 
 Value *evalLet(Value *args, Frame *frame) {
-    Frame *new_frame;
+    /*printf("\n");
+    printTree(args);
+    printf("\n");*/
+    Frame *new_frame = talloc(sizeof(Frame));
     new_frame->parent = frame;
     Value *new_bindings = car(args);
     
     new_frame->bindings = new_bindings;
-    
+    printTree(new_bindings);
+    printf("\nWeird error above\n\n\n");
+    //assert(new_bindings->type != NULL_TYPE);
     return eval(car(cdr(args)),new_frame);
 }
 
 Value *eval(Value *tree, Frame *frame) {
+    Value *result;
     switch (tree->type)  {
         case INT_TYPE:
-            return tree;
+            result = tree;
             break;
         case DOUBLE_TYPE:
-            return tree;
+            result = tree;
             break;
         case STR_TYPE:
-            return tree;
+            result = tree;
             break;
         case BOOL_TYPE:
-            return tree;
+            result = tree;
             break;
         case SYMBOL_TYPE:
-            return lookUpSymbol(tree, frame);
+            result =  lookUpSymbol(tree, frame);
             break;
-        case CONS_TYPE:  
-            Value *first = car(expr);
-            Value *args = cdr(expr);
+        case CONS_TYPE:
+            {
+            Value *first_arg = car(tree);
+            Value *args = cdr(tree);
             
             // Sanity and error checking on first...
             
-            if ((*first).type != SYMBOL_TYPE) {
+            if ((*first_arg).type != SYMBOL_TYPE) {
                 evaluationError();
             }
             
-            if (!strcmp(first->s,"if")) {
+            if (strcmp(first_arg->s,"if")==0) {
                 result = evalIf(args, frame);
             }
             
-            if (!strcmp(first->s, "let")) {
+            else if (strcmp(first_arg->s, "let")==0) {
                 result = evalLet(args, frame);
             }
             
@@ -131,7 +152,9 @@ Value *eval(Value *tree, Frame *frame) {
                 evaluationError();
             }
             break;
+            }
         // more case statements?
     }
     // do something here
+    return result;
 }
