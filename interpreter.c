@@ -11,6 +11,8 @@
 #include "value.h"
 #include "parser.h"
 
+
+// Helper function to print Value for troubleshooting purposes
 void printVal(Value *input) {
     switch (input->type) {
         case CONS_TYPE:
@@ -20,7 +22,7 @@ void printVal(Value *input) {
             printVal(cdr(input));
             printf(")");
             break;
-        case BOOL_TYPE:
+        case BOOL_TYPE:// more case statements?
             if (input->i == 0) {
                 printf("#f:boolean");
             }
@@ -49,13 +51,18 @@ void printVal(Value *input) {
     }
 }
 
+// Interprets input scheme code and prints results to command line
 void interpret(Value *tree) {
+    // Create a global frame in function call
     Frame *global = talloc(sizeof(Frame));
+    // Iterates through input parse tree, evaluating S-expressions and
+    // printing results
     while ((*tree).type != NULL_TYPE) {
         assert((*tree).type == CONS_TYPE);
+        // Evaluate individual expression...
         Value *expression = car(tree);
         Value *result = eval(expression, global);
-        
+        // And print resulting Value appropriately
         switch ((*result).type) {
             case BOOL_TYPE:
                 if ((*result).i == 0) {
@@ -77,11 +84,17 @@ void interpret(Value *tree) {
             case SYMBOL_TYPE:
                 printf("%s\n", (*result).s);
                 break;
+            case CONS_TYPE:
+                printTree(result);
+                printf("\n");
+                break;          
         }
         tree = cdr(tree);
     }
 }
 
+// Helper function to print appropriate evaluation error message and cleanup
+// memory on exit
 void evaluationError(int error) {
     printf("Evaluation error: ");
     if (error == 0) {
@@ -105,9 +118,13 @@ void evaluationError(int error) {
     texit(1);
 }
 
+// Finds and returns Value bound to argument symbol in argument Frame or
+// Frame's parents
 Value *lookUpSymbol(Value *symbol, Frame *frame) {
+    // Searches for symbol in each frame above input frame
     while (frame != NULL) {
         Value *bindings = frame->bindings;
+        // While loop in case bindings member of frame not assigned
         while (bindings == NULL) {
             if (frame->parent == NULL) {
                 evaluationError(3);
@@ -115,26 +132,31 @@ Value *lookUpSymbol(Value *symbol, Frame *frame) {
             frame = frame->parent;
             bindings = frame->bindings;
         }
+        // Iterates through bindings...
         while ((*bindings).type != NULL_TYPE) {
             Value *symbol1_cons = car(bindings);
             Value *symbol1 = car(symbol1_cons);
             assert(symbol1->type == SYMBOL_TYPE);
-            
+            // Checks if string member of binding matches that of input symbol
             if (strcmp((*symbol1).s, (*symbol).s) == 0) {
                 return car(cdr(symbol1_cons));
             }
+            // Otherwise continues search
             else {
                 bindings = cdr(bindings);
             }
         }
         frame = frame->parent;
     }
+    // If symbol not found, print evaluation error and exit
     evaluationError(3);
     return symbol;
 }
 
+// Evaluates argumnets of an if statement and returns resulting Value
 Value *evalIf(Value *args, Frame *frame) {
-    if (args->type != CONS_TYPE){
+    // Checks if valid input structure, if not throws evaluation error
+    if (args->type != CONS_TYPE) {
         evaluationError(1);
     }
     else {
@@ -145,10 +167,11 @@ Value *evalIf(Value *args, Frame *frame) {
             evaluationError(1);
         }
     }
-    
+    // Creates Values for expression and both possible results to be returned
     Value *bool_exp = eval(car(args), frame);
     Value *true_result = car(cdr(args));
     Value *false_result = car(cdr(cdr(args)));
+    // Checks valid input structure and returns appropriate result
     if (bool_exp->type == BOOL_TYPE) {
         if (bool_exp->i == 1) {
             return eval(true_result, frame);
@@ -163,18 +186,22 @@ Value *evalIf(Value *args, Frame *frame) {
     return args;
 }
 
+// Evaluates arguments of a let statement and returns resulting Value
 Value *evalLet(Value *args, Frame *frame) {
+    // Create new frame and set input frame to be parent frame
     Frame *new_frame = talloc(sizeof(Frame));
     new_frame->parent = frame;
+    // Create new linked list to store bindings created in let statement
     Value *new_bindings = makeNull();
     
     Value *cur_node = car(args);
-    
+    // Check valid input structure
     if (car(cur_node)->type != CONS_TYPE) {
         evaluationError(2);
     }
-    
+    // Iterate through arguments...
     while (cur_node->type != NULL_TYPE) {
+        // Sets up singular var and value pair
         Value *node_to_eval = car(cdr(car(cur_node)));
         Value *pointer = eval(node_to_eval, frame);
  
@@ -188,18 +215,21 @@ Value *evalLet(Value *args, Frame *frame) {
         }
         new_bindings = cons(val, new_bindings);
         
+        // Iterative step to set up next var and value pair
         cur_node = cdr(cur_node);
     }
     
-    
     new_frame->bindings = new_bindings;
-
+    
+    // Eval in new frame with new bindings
     return eval(car(cdr(args)), new_frame);
 }
 
+// Eval block
 Value *eval(Value *tree, Frame *frame) {
     Value *result;
     switch (tree->type) {
+        // For int, bool, double, and string type, we simply return tree
         case INT_TYPE:
             result = tree;
             break;
@@ -212,6 +242,7 @@ Value *eval(Value *tree, Frame *frame) {
         case BOOL_TYPE:
             result = tree;
             break;
+        // Looks for symbol in frames
         case SYMBOL_TYPE:
             result = lookUpSymbol(tree, frame);
             break;
@@ -220,7 +251,7 @@ Value *eval(Value *tree, Frame *frame) {
             Value *first_arg = car(tree);
             Value *args = cdr(tree);
             
-            // Sanity and error checking on first...
+            // Checking first argument...
             
             if ((*first_arg).type != SYMBOL_TYPE) {
                 evaluationError(5);
@@ -234,13 +265,16 @@ Value *eval(Value *tree, Frame *frame) {
                 result = evalLet(args, frame);
             }
             
+            else if (strcmp(first_arg->s, "quote") == 0) {
+                return args;
+            }
+            
             else {
-                // not a recognized special form
+                // Not a recognized special form
                 evaluationError(4);
             }
             break;
             }
-        // more case statements?
     }
     return result;
 }
