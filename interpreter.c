@@ -51,10 +51,30 @@ void printVal(Value *input) {
     }
 }
 
+Value *evalEach(Value *args, Frame *frame) {
+    Value *cur_node = args;
+    Value *evaled_args = makeNull();
+    
+    while (cur_node != NULL_TYPE) {
+        Value *arg = car(cur_node);
+        
+        Value *evaled_arg = eval(arg, frame);
+        
+        evaled_args = cons(evaled_arg, evaled_args);
+        
+        cur_node = cdr(cur_node);
+    }
+    
+    evaled_args = reverse(evaled_args);
+    
+    return evaled_args;
+}
+
 // Interprets input scheme code and prints results to command line
 void interpret(Value *tree) {
     // Create a global frame in function call
     Frame *global = talloc(sizeof(Frame));
+    global->bindings = makeNull();
     // Iterates through input parse tree, evaluating S-expressions and
     // printing results
     while ((*tree).type != NULL_TYPE) {
@@ -114,6 +134,18 @@ void evaluationError(int error) {
     }
     else if (error == 5) {
         printf("Not a symbol\n");
+    }
+    else if (error == 6) {
+        printf("Too many arguments for define\n");
+    }
+    else if (error == 7) {
+        printf("Lambda needs multiple parameters\n");
+    }
+    else if (error == 8) {
+        printf("Function call has too many parameters\n");
+    }
+    else if (error == 9) {
+        printf("Function call needs more parameters\n");
     }
     texit(1);
 }
@@ -225,6 +257,83 @@ Value *evalLet(Value *args, Frame *frame) {
     return eval(car(cdr(args)), new_frame);
 }
 
+Value *evalDefine(Value *args, Frame *frame) {
+    Value *var = car(args);
+    Value *expr = car(cdr(args));
+    
+    if (cdr(expr) != NULL_TYPE) {
+        evaluationError(6);
+    }
+    
+    Value *eval_expr = eval(expr, frame);
+    Value *new_bindings = makeNull();
+    new_bindings = cons(eval_expr, new_bindings);
+    new_bindings = cons(var, new_bindings);
+    
+    frame->bindings = cons(new_bindings, frame->bindings);
+    
+    Value *void_val = talloc(sizeof(Value));
+    void_val->type = VOID_TYPE;
+    
+    return void_val;
+}
+
+Value *apply(Value *function, Value *args) {
+    assert(function->type == CLOSURE_TYPE);
+    Closure *closure = function->cl;
+    
+    Frame *frame = talloc(sizeof(Frame));
+    frame->parent = closure->frame;
+    
+    new_bindings = makeNull();
+    Value *cur_node = args;
+    Value *params = closure->paramNames;
+    Value *cur_param = params;
+    
+    while (cur_node->type != NULL_TYPE) {
+        if (cur_param->type == NULL_TYPE) {
+            evaluationError(8);
+        }
+        
+        Value *list = makeNull();
+        list = cons(car(cur_node), list);
+        list = cons(car(cur_param), list);
+        
+        new_bindings = cons(list, new_bindings);
+        
+        cur_node = cdr(cur_node);
+        cur_param = cdr(cur_param);
+    }
+    
+    if (cur_param->type != NULL_TYPE) {
+        evaluationError(9);
+    }
+    
+    frame->bindings = new_bindings;
+    Value *body = closure->functionCode;
+    
+    return eval(body, frame);
+}
+
+Value *evalLambda(Value *args, Frame *frame) {
+    if (args->type != CONS_TYPE) {
+        evaluationError(7);
+    }
+    Value *params = car(args);
+    Value *body = car(cdr(args));
+    
+    struct Closure cl;
+    cl->paramNames = params;
+    cl->functionCode = body;
+    cl->frame = frame;
+    
+    Value* closure;
+    closure->type = CLOSURE_TYPE;
+    closure->cl = cl;
+    
+    return closure;
+}
+
 // Eval block
 Value *eval(Value *tree, Frame *frame) {
     Value *result;
@@ -257,7 +366,7 @@ Value *eval(Value *tree, Frame *frame) {
                 evaluationError(5);
             }
             
-            if (strcmp(first_arg->s,"if") == 0) {
+            if (strcmp(first_arg->s, "if") == 0) {
                 result = evalIf(args, frame);
             }
             
@@ -269,9 +378,20 @@ Value *eval(Value *tree, Frame *frame) {
                 return args;
             }
             
+            else if (strcmp(first_arg->s, "define") == 0) {
+                result = evalDefine(args, frame);
+            }
+            
+            else if (strcmp(first_arg->s, "lambda") == 0) {
+                result = evalLambda(args, frame);
+            }
+            
             else {
-                // Not a recognized special form
-                evaluationError(4);
+                // If not a special form, evaluate the first, evaluate the args, then
+                // apply the first to the args.
+                Value *evaledOperator = eval(first, frame);
+                Value *evaledArgs = evalEach(args, frame);
+                return apply(evaledOperator,evaledArgs);
             }
             break;
             }
