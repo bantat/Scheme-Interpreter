@@ -1,0 +1,5 @@
+(define test
+   (lambda (bool int)
+	(if bool int 7)))
+
+(test #t 10)

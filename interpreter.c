@@ -55,7 +55,7 @@ Value *evalEach(Value *args, Frame *frame) {
     Value *cur_node = args;
     Value *evaled_args = makeNull();
     
-    while (cur_node != NULL_TYPE) {
+    while (cur_node->type != NULL_TYPE) {
         Value *arg = car(cur_node);
         
         Value *evaled_arg = eval(arg, frame);
@@ -107,7 +107,10 @@ void interpret(Value *tree) {
             case CONS_TYPE:
                 printTree(result);
                 printf("\n");
-                break;          
+                break;
+            case CLOSURE_TYPE:
+                printf("#<procedure>\n");
+                break;
         }
         tree = cdr(tree);
     }
@@ -258,10 +261,12 @@ Value *evalLet(Value *args, Frame *frame) {
 }
 
 Value *evalDefine(Value *args, Frame *frame) {
+    //printTree(args);
     Value *var = car(args);
     Value *expr = car(cdr(args));
+    //printVal(cdr(cdr(args)));
     
-    if (cdr(expr) != NULL_TYPE) {
+    if (cdr(cdr(args))->type != NULL_TYPE) {
         evaluationError(6);
     }
     
@@ -280,14 +285,14 @@ Value *evalDefine(Value *args, Frame *frame) {
 
 Value *apply(Value *function, Value *args) {
     assert(function->type == CLOSURE_TYPE);
-    Closure *closure = function->cl;
+    struct Closure closure = function->cl;
     
     Frame *frame = talloc(sizeof(Frame));
-    frame->parent = closure->frame;
+    frame->parent = closure.frame;
     
-    new_bindings = makeNull();
+    Value *new_bindings = makeNull();
     Value *cur_node = args;
-    Value *params = closure->paramNames;
+    Value *params = closure.paramNames;
     Value *cur_param = params;
     
     while (cur_node->type != NULL_TYPE) {
@@ -310,7 +315,7 @@ Value *apply(Value *function, Value *args) {
     }
     
     frame->bindings = new_bindings;
-    Value *body = closure->functionCode;
+    Value *body = closure.functionCode;
     
     return eval(body, frame);
 }
@@ -323,11 +328,11 @@ Value *evalLambda(Value *args, Frame *frame) {
     Value *body = car(cdr(args));
     
     struct Closure cl;
-    cl->paramNames = params;
-    cl->functionCode = body;
-    cl->frame = frame;
+    cl.paramNames = params;
+    cl.functionCode = body;
+    cl.frame = frame;
     
-    Value* closure;
+    Value* closure = talloc(sizeof(Value));
     closure->type = CLOSURE_TYPE;
     closure->cl = cl;
     
@@ -389,7 +394,7 @@ Value *eval(Value *tree, Frame *frame) {
             else {
                 // If not a special form, evaluate the first, evaluate the args, then
                 // apply the first to the args.
-                Value *evaledOperator = eval(first, frame);
+                Value *evaledOperator = eval(first_arg, frame);
                 Value *evaledArgs = evalEach(args, frame);
                 return apply(evaledOperator,evaledArgs);
             }

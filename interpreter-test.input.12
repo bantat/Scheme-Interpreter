@@ -1,0 +1,5 @@
+(define f
+   (lambda (lst)
+	lst))
+
+(f (quote (1 2 3 4)))
