@@ -17,4 +17,6 @@
 (define foo2
   (curry3 foo))
 
+foo2
+
 (((foo2 1) 2) 3)

@@ -367,28 +367,35 @@ Value *eval(Value *tree, Frame *frame) {
             
             // Checking first argument...
             
-            if ((*first_arg).type != SYMBOL_TYPE) {
-                evaluationError(5);
-            }
-            
-            if (strcmp(first_arg->s, "if") == 0) {
-                result = evalIf(args, frame);
-            }
-            
-            else if (strcmp(first_arg->s, "let") == 0) {
-                result = evalLet(args, frame);
-            }
-            
-            else if (strcmp(first_arg->s, "quote") == 0) {
-                return args;
-            }
-            
-            else if (strcmp(first_arg->s, "define") == 0) {
-                result = evalDefine(args, frame);
-            }
-            
-            else if (strcmp(first_arg->s, "lambda") == 0) {
-                result = evalLambda(args, frame);
+            if ((*first_arg).type == SYMBOL_TYPE) {
+                if (strcmp(first_arg->s, "if") == 0) {
+                    result = evalIf(args, frame);
+                }
+
+                else if (strcmp(first_arg->s, "let") == 0) {
+                    result = evalLet(args, frame);
+                }
+
+                else if (strcmp(first_arg->s, "quote") == 0) {
+                    return args;
+                }
+
+                else if (strcmp(first_arg->s, "define") == 0) {
+                    result = evalDefine(args, frame);
+                }
+
+                else if (strcmp(first_arg->s, "lambda") == 0) {
+                    result = evalLambda(args, frame);
+                }
+                
+                else {
+                    // If not a special form, evaluate the first, evaluate the args, then
+                    // apply the first to the args.
+                    Value *evaledOperator = eval(first_arg, frame);
+                    Value *evaledArgs = evalEach(args, frame);
+                    return apply(evaledOperator, evaledArgs);
+                }
+                
             }
             
             else {
@@ -396,7 +403,7 @@ Value *eval(Value *tree, Frame *frame) {
                 // apply the first to the args.
                 Value *evaledOperator = eval(first_arg, frame);
                 Value *evaledArgs = evalEach(args, frame);
-                return apply(evaledOperator,evaledArgs);
+                return apply(evaledOperator, evaledArgs);
             }
             break;
             }
