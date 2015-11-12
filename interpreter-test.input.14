@@ -1,0 +1,20 @@
+(define curry3
+  (lambda (fun)
+    (lambda (a)
+      (lambda (b) ; nested procedures with single arguments
+        (lambda (c)
+          (fun a b c)))))) ; final procedure returns fun applied to all 3 args
+
+(define uncurry3
+  (lambda (fun) ; curried function that has not been applied to arguments
+    (lambda (a b c) ; arguments to be applied to the curried function
+      (((fun a) b) c)))) ; applies the curried function, and returns the result
+
+(define foo
+  (lambda (a b c)
+    a))
+
+(define foo2
+  (curry3 foo))
+
+(((foo2 1) 2) 3)
