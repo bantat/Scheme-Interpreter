@@ -261,15 +261,15 @@ Value *evalLet(Value *args, Frame *frame) {
 }
 
 Value *evalDefine(Value *args, Frame *frame) {
-    //printTree(args);
     Value *var = car(args);
     Value *expr = car(cdr(args));
-    //printVal(cdr(cdr(args)));
     
     if (cdr(cdr(args))->type != NULL_TYPE) {
+        // If too many arguments for define...
         evaluationError(6);
     }
     
+    // Evaluates expression and sets up in global frame
     Value *eval_expr = eval(expr, frame);
     Value *new_bindings = makeNull();
     new_bindings = cons(eval_expr, new_bindings);
@@ -277,6 +277,7 @@ Value *evalDefine(Value *args, Frame *frame) {
     
     frame->bindings = cons(new_bindings, frame->bindings);
     
+    // Returns void Value for interpreter to ignore
     Value *void_val = talloc(sizeof(Value));
     void_val->type = VOID_TYPE;
     
@@ -284,9 +285,11 @@ Value *evalDefine(Value *args, Frame *frame) {
 }
 
 Value *apply(Value *function, Value *args) {
+    // Applies given function to multiple arguments
     assert(function->type == CLOSURE_TYPE);
     struct Closure closure = function->cl;
     
+    // Sets up new frame for execution of body of code in closure
     Frame *frame = talloc(sizeof(Frame));
     frame->parent = closure.frame;
     
@@ -295,8 +298,10 @@ Value *apply(Value *function, Value *args) {
     Value *params = closure.paramNames;
     Value *cur_param = params;
     
+    // Sets up list of bindings based on parameters
     while (cur_node->type != NULL_TYPE) {
         if (cur_param->type == NULL_TYPE) {
+            // If too many parameters are passed into function
             evaluationError(8);
         }
         
@@ -309,7 +314,7 @@ Value *apply(Value *function, Value *args) {
         cur_node = cdr(cur_node);
         cur_param = cdr(cur_param);
     }
-    
+    // If there are less parameters passed than what function needs
     if (cur_param->type != NULL_TYPE) {
         evaluationError(9);
     }
@@ -321,9 +326,11 @@ Value *apply(Value *function, Value *args) {
 }
 
 Value *evalLambda(Value *args, Frame *frame) {
+    // Sets up a closure and returns the closure type Value
     if (args->type != CONS_TYPE) {
         evaluationError(7);
     }
+    // Extracts body and parameters from input arguments
     Value *params = car(args);
     Value *body = car(cdr(args));
     
@@ -366,7 +373,7 @@ Value *eval(Value *tree, Frame *frame) {
             Value *args = cdr(tree);
             
             // Checking first argument...
-            
+            // If the first argument is a string...
             if ((*first_arg).type == SYMBOL_TYPE) {
                 if (strcmp(first_arg->s, "if") == 0) {
                     result = evalIf(args, frame);
@@ -397,7 +404,7 @@ Value *eval(Value *tree, Frame *frame) {
                 }
                 
             }
-            
+            // Otherwise it might be another ConsCell
             else {
                 // If not a special form, evaluate the first, evaluate the args, then
                 // apply the first to the args.
