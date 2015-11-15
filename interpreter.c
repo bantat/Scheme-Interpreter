@@ -154,6 +154,8 @@ Value *primitiveAdd(Value *args) {
 }
 
 Value *primitiveNull(Value *args) {
+    printVal(args);
+    printf("\n");
     if (args->type == NULL_TYPE) {
         evaluationError(10);
     }
@@ -206,7 +208,6 @@ Value *primitiveCdr(Value *args) {
     }
     
     result_val = cdr(result_val);
-    result_val = cons(result_val, makeNull());
     
     return result_val;
 }
@@ -295,8 +296,9 @@ void interpret(Value *tree) {
                 printf("%s\n", (*result).s);
                 break;
             case CONS_TYPE:
+                printf("(");
                 printTree(result);
-                printf("\n");
+                printf(")\n");
                 break;
             case CLOSURE_TYPE:
                 printf("#<procedure>\n");
@@ -509,6 +511,8 @@ Value *evalLambda(Value *args, Frame *frame) {
 
 // Eval block
 Value *eval(Value *tree, Frame *frame) {
+//    printVal(tree);
+//    printf("\n");
     Value *result;
     switch (tree->type) {
         // For int, bool, double, and string type, we simply return tree
@@ -545,7 +549,7 @@ Value *eval(Value *tree, Frame *frame) {
                 }
 
                 else if (strcmp(first_arg->s, "quote") == 0) {
-                    return args;
+                    return car(args);
                 }
 
                 else if (strcmp(first_arg->s, "define") == 0) {

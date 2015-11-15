@@ -235,9 +235,10 @@ Value *tokenize() {
         }
         // String managing
         else if (charRead == '"') {
-            char *test_string = talloc(sizeof(char));
+            char *test_string = talloc(sizeof(char) * 200);
             test_string[0] = '\0';
             int length = 0; //used to keep track of length of array
+            int memSize = 199;
             charRead = fgetc(stdin);
             
             while (charRead != '"') {
@@ -262,26 +263,33 @@ Value *tokenize() {
                     else if (nextChar == '\"') {
                         charRead = '\"';
                     }
-                    char *temp = talloc(sizeof(char) * (length + 2));
-                    for(int i = 0; test_string[i] != '\0'; i++) {
-                        temp[i] = test_string[i];
+                    
+                    if (memSize == length) {
+                        char *temp = talloc(sizeof(char) * ((memSize * 2) + 1));
+                        for(int i = 0; test_string[i] != '\0'; i++) {
+                            temp[i] = test_string[i];
+                        }
+                        memSize = memSize * 2;
+                        test_string = temp;
                     }
-                    temp[length] = charRead;
+                    test_string[length] = charRead;
                     length++;
-                    temp[length] = '\0';
-                    test_string = temp;
+                    test_string[length] = '\0';
                 }
                 else {
                     // Adds character to test_string
-                    char *temp = talloc(sizeof(char) * (length + 2));
-                    for(int i = 0; test_string[i] != '\0'; i++) {
-                        temp[i] = test_string[i];
+                    if (memSize == length) {
+                        char *temp = talloc(sizeof(char) * ((memSize * 2) + 1));
+                        for(int i = 0; test_string[i] != '\0'; i++) {
+                            temp[i] = test_string[i];
+                        }
+                        memSize = memSize * 2;
+                        test_string = temp;
                     }
-                    temp[length] = charRead;
+                    test_string[length] = charRead;
                     length++;
                     // Adds null terminator for helper function use
-                    temp[length] = '\0';
-                    test_string = temp;
+                    test_string[length] = '\0';
                     
                 }
                 charRead = fgetc(stdin);
@@ -294,9 +302,10 @@ Value *tokenize() {
         }
         // Else statement that covers numbers, bools, and symbols
         else {
-            char *token = talloc(sizeof(char));
+            char *token = talloc(sizeof(char) * 200);
             token[0] = '\0';
             int length2 = 0;
+            int memSize2 = 199;
             while ((!is_brace(charRead)) && (!is_space(charRead))) {
                 if (charRead == EOF) {
                     printf("Syntax Error: Incomplete Token\n");
@@ -308,15 +317,18 @@ Value *tokenize() {
                 }
                 else {
                     // Adds the valid character 
-                    char *temp2 = talloc(sizeof(char) * (length2 + 2));
-                    for(int i= 0; token[i] != '\0'; i++) {
-                        temp2[i] = token[i];
+                    if (length2 == memSize2) {
+                        char *temp2 = talloc(sizeof(char) * ((memSize2 * 2) + 1));
+                        for(int i= 0; token[i] != '\0'; i++) {
+                            temp2[i] = token[i];
+                        }
+                        token = temp2;
+                        memSize2 = memSize2 * 2;
                     }
-                    temp2[length2] = charRead;
+                    token[length2] = charRead;
                     length2++;
                     // Null terminator used for helper functions
-                    temp2[length2] = '\0';
-                    token = temp2;
+                    token[length2] = '\0';
                 }
                 charRead = fgetc(stdin);
             }
