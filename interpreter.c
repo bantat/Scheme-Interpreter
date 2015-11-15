@@ -12,6 +12,50 @@
 #include "parser.h"
 
 
+
+// Helper function to print appropriate evaluation error message and cleanup
+// memory on exit
+void evaluationError(int error) {
+    printf("Evaluation error: ");
+    if (error == 0) {
+        printf("Test condition for if statement doesn't resolve solve to a boolean\n");
+    }
+    else if (error == 1) {
+        printf("If statement doesn't contain enough arguments\n");
+    }
+    else if (error == 2) {
+        printf("Parameter for Let must be nested list\n");
+    }
+    else if (error == 3) {
+        printf("Symbol being evaluated doesn't have a bound value\n");
+    }
+    else if (error == 4) {
+        printf("Not a recognized special form\n");
+    }
+    else if (error == 5) {
+        printf("Not a symbol\n");
+    }
+    else if (error == 6) {
+        printf("Too many arguments for define\n");
+    }
+    else if (error == 7) {
+        printf("Lambda needs multiple parameters\n");
+    }
+    else if (error == 8) {
+        printf("Function call has too many parameters\n");
+    }
+    else if (error == 9) {
+        printf("Function call needs more parameters\n");
+    }
+    else if (error == 10) {
+        printf("Invalid arguments for primitive function\n");
+    }
+    else if (error == 11) {
+        printf("Car and Cdr require a list as an argument");
+    }
+    texit(1);
+}
+
 // Helper function to print Value for troubleshooting purposes
 void printVal(Value *input) {
     switch (input->type) {
@@ -51,6 +95,20 @@ void printVal(Value *input) {
     }
 }
 
+Value *trueVal() {
+    Value *true_val = talloc(sizeof(Value));
+    true_val->type = BOOL_TYPE;
+    true_val->i = 1;
+    return true_val;
+}
+
+Value *falseVal() {
+    Value *false_val = talloc(sizeof(Value));
+    false_val->type = BOOL_TYPE;
+    false_val->i = 0;
+    return false_val;
+}
+
 Value *evalEach(Value *args, Frame *frame) {
     Value *cur_node = args;
     Value *evaled_args = makeNull();
@@ -70,11 +128,143 @@ Value *evalEach(Value *args, Frame *frame) {
     return evaled_args;
 }
 
+Value *primitiveAdd(Value *args) {
+    printf("Printing args: ");
+    printVal(args);
+    printf("\n");
+    float result = 0;
+    while (args->type != NULL_TYPE) {
+        Value *cur_node = car(args);
+        if (cur_node->type != INT_TYPE) {
+            if (cur_node->type != DOUBLE_TYPE) {
+                evaluationError(10);
+            }
+            result = result + cur_node->d;
+            args = cdr(args);
+        }
+        else {
+            result = result + cur_node->i;
+            args = cdr(args);
+        }
+    }
+    Value *result_val = talloc(sizeof(Value));
+    result_val->type = DOUBLE_TYPE;
+    result_val->d = result;
+    return result_val;
+}
+
+Value *primitiveNull(Value *args) {
+    if (args->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    assert(args->type == CONS_TYPE);
+    if (cdr(args)->type != NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (car(args)->type == NULL_TYPE) {
+        return trueVal();
+    }
+    else {
+        return falseVal();
+    }
+}
+
+Value *primitiveCar(Value *args) {
+    if (args->type == NULL_TYPE){
+        evaluationError(10);
+    }
+    assert(args->type == CONS_TYPE);
+    if (cdr(args)->type != NULL_TYPE) {
+        evaluationError(10);
+    }
+    Value *lst = car(args);
+    if (lst->type != CONS_TYPE) {
+        evaluationError(11);
+    }
+    Value *result_val = lst;
+    while (result_val->type == CONS_TYPE) {
+        result_val = car(result_val);
+    }
+    return result_val;
+}
+
+Value *primitiveCdr(Value *args) {
+    if (args->type == NULL_TYPE){
+        evaluationError(10);
+    }
+    assert(args->type == CONS_TYPE);
+    if (cdr(args)->type != NULL_TYPE) {
+        evaluationError(10);
+    }
+    Value *lst = car(args);
+    if (lst->type != CONS_TYPE) {
+        evaluationError(11);
+    }
+    Value *result_val = lst;
+    while (car(result_val)->type == CONS_TYPE) {
+        result_val = car(result_val);
+    }
+    
+    result_val = cdr(result_val);
+    result_val = cons(result_val, makeNull());
+    
+    return result_val;
+}
+
+Value *primitiveCons(Value *args) {
+    if (args->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (car(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(cdr(args))->type != NULL_TYPE) {
+        evaluationError(10);
+    }
+    
+    Value *arg1 = car(args);
+    Value *arg2 = car(cdr(args));
+    
+    if (arg1->type == CONS_TYPE) {
+        arg1 = car(arg1);
+    }
+    
+    Value *result_val = cons(arg1, car(arg2));
+    return cons(result_val, makeNull());
+}
+
+void bind(char *name, Value *(*function)(struct Value *), Frame *frame) {
+    // Add primitive functions to top-level bindings list
+    Value *fun_val = talloc(sizeof(Value));
+    fun_val->type = PRIMITIVE_TYPE;
+    fun_val->pf = function;
+    // Add binding of name to value
+    Value *symbol = talloc(sizeof(Value));
+    symbol->type = SYMBOL_TYPE;
+    symbol->s = name;
+    
+    Value *binding = makeNull();
+    binding = cons(fun_val, binding);
+    binding = cons(symbol, binding);
+    
+    frame->bindings = cons(binding, frame->bindings);
+}
+
 // Interprets input scheme code and prints results to command line
 void interpret(Value *tree) {
     // Create a global frame in function call
     Frame *global = talloc(sizeof(Frame));
     global->bindings = makeNull();
+    
+    bind("+", primitiveAdd, global);
+    bind("null?", primitiveNull, global);
+    bind("car", primitiveCar, global);
+    bind("cdr", primitiveCdr, global);
+    bind("cons", primitiveCons, global);
+    
     // Iterates through input parse tree, evaluating S-expressions and
     // printing results
     while ((*tree).type != NULL_TYPE) {
@@ -111,46 +301,12 @@ void interpret(Value *tree) {
             case CLOSURE_TYPE:
                 printf("#<procedure>\n");
                 break;
+            case PRIMITIVE_TYPE:
+                printf("#<procedure>\n");
+                break;
         }
         tree = cdr(tree);
     }
-}
-
-// Helper function to print appropriate evaluation error message and cleanup
-// memory on exit
-void evaluationError(int error) {
-    printf("Evaluation error: ");
-    if (error == 0) {
-        printf("Test condition for if statement doesn't resolve solve to a boolean\n");
-    }
-    else if (error == 1) {
-        printf("If statement doesn't contain enough arguments\n");
-    }
-    else if (error == 2) {
-        printf("Parameter for Let must be nested list\n");
-    }
-    else if (error == 3) {
-        printf("Symbol being evaluated doesn't have a bound value\n");
-    }
-    else if (error == 4) {
-        printf("Not a recognized special form\n");
-    }
-    else if (error == 5) {
-        printf("Not a symbol\n");
-    }
-    else if (error == 6) {
-        printf("Too many arguments for define\n");
-    }
-    else if (error == 7) {
-        printf("Lambda needs multiple parameters\n");
-    }
-    else if (error == 8) {
-        printf("Function call has too many parameters\n");
-    }
-    else if (error == 9) {
-        printf("Function call needs more parameters\n");
-    }
-    texit(1);
 }
 
 // Finds and returns Value bound to argument symbol in argument Frame or
@@ -286,7 +442,12 @@ Value *evalDefine(Value *args, Frame *frame) {
 
 Value *apply(Value *function, Value *args) {
     // Applies given function to multiple arguments
-    assert(function->type == CLOSURE_TYPE);
+    assert(function->type == CLOSURE_TYPE || function->type == PRIMITIVE_TYPE);
+    
+    if (function->type == PRIMITIVE_TYPE) {
+        return function->pf(args);
+    }
+    
     struct Closure closure = function->cl;
     
     // Sets up new frame for execution of body of code in closure
