@@ -1,0 +1,26 @@
+;;This is the first assignment
+
+(car (cdr (cdr (quote (apple orange pear grapefruit)))))
+(car (car (cdr (cdr (car (quote (((apple) (orange) (pear) (grapefruit)))))))))
+(car (car (car (cdr (cdr (quote (apple (orange) ((pear)) (((grapefruit))))))))))
+
+
+;;This is where the work for the second assignment began
+
+
+(define add-one
+  (lambda (x)
+    (+ x 1)))
+
+(define another-add-one add-one)
+(another-add-one 5)
+
+(define a 5)
+(define b 6)
+(define c 7)
+(define strange
+  (lambda (x)
+    (let ((a 1) (b 2))
+      (+ x a b))))
+
+(strange c)

@@ -90,6 +90,32 @@ Value *parse(Value *tokens) {
 void printTree(Value *tree) {
     Value *cur_node = tree;
     while ((*cur_node).type != NULL_TYPE) {
+        if (cur_node->type != CONS_TYPE) {
+            switch (cur_node->type) {
+                case BOOL_TYPE:
+                    if ((*cur_node).i == 0) {
+                        printf(". #f");
+                    }
+                    else {
+                        printf(". #t");
+                    }
+                    break;
+                case INT_TYPE:
+                    printf(". %i", (*cur_node).i);
+                    break;
+                case DOUBLE_TYPE:
+                    printf(". %f", (*cur_node).d);
+                    break;
+                case STR_TYPE:
+                    printf(". \"%s\"", (*cur_node).s);
+                    break;
+                case SYMBOL_TYPE:
+                    printf(". %s", (*cur_node).s);
+                    break;
+            }
+            break;
+        }
+        
         // If statement to print nested parse trees
         if ((*car(cur_node)).type == CONS_TYPE) {
             printf("(");

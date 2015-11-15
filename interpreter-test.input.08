@@ -1,1 +1,4 @@
 (if #t (quote (a b c)) 32)
+(quote a)
+(quote (a b c))
+(quote (a b (quote c d e)))

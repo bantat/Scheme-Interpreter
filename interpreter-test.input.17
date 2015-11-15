@@ -1,0 +1,4 @@
+(cons 6 (quote (2 3)))
+(car (quote (("computer" "science") "is" "awesome")))
+(cdr (quote (("computer" "science") "is" "awesome")))
+(cons 7 (cons 6 5))

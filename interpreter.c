@@ -51,7 +51,7 @@ void evaluationError(int error) {
         printf("Invalid arguments for primitive function\n");
     }
     else if (error == 11) {
-        printf("Car and Cdr require a list as an argument");
+        printf("Car and Cdr require a list as an argument\n");
     }
     texit(1);
 }
@@ -129,9 +129,6 @@ Value *evalEach(Value *args, Frame *frame) {
 }
 
 Value *primitiveAdd(Value *args) {
-    printf("Printing args: ");
-    printVal(args);
-    printf("\n");
     float result = 0;
     while (args->type != NULL_TYPE) {
         Value *cur_node = car(args);
@@ -154,47 +151,47 @@ Value *primitiveAdd(Value *args) {
 }
 
 Value *primitiveNull(Value *args) {
-    printVal(args);
-    printf("\n");
+    // The argument passed should not be empty
     if (args->type == NULL_TYPE) {
         evaluationError(10);
     }
     assert(args->type == CONS_TYPE);
+    // If the cdr isn't empty, then they have passed more than one argument
     if (cdr(args)->type != NULL_TYPE) {
         evaluationError(10);
     }
     if (car(args)->type == NULL_TYPE) {
+        // Calls method that returns true bool val
         return trueVal();
     }
     else {
+        // Equivalent method for false bool val
         return falseVal();
     }
 }
 
 Value *primitiveCar(Value *args) {
+    // Cannot call car of a nonexistent argument
     if (args->type == NULL_TYPE){
         evaluationError(10);
     }
     assert(args->type == CONS_TYPE);
+    // Cannot have more than one argument
     if (cdr(args)->type != NULL_TYPE) {
         evaluationError(10);
     }
-    Value *lst = car(args);
-    if (lst->type != CONS_TYPE) {
-        evaluationError(11);
-    }
-    Value *result_val = lst;
-    while (result_val->type == CONS_TYPE) {
-        result_val = car(result_val);
-    }
-    return result_val;
+    // takes the first argument, and returns its car
+    Value *argument = car(args);
+    return car(argument);
 }
 
 Value *primitiveCdr(Value *args) {
+    // Cannot call car of a nonexistent argument
     if (args->type == NULL_TYPE){
         evaluationError(10);
     }
     assert(args->type == CONS_TYPE);
+    // Cannot have more than one argument
     if (cdr(args)->type != NULL_TYPE) {
         evaluationError(10);
     }
@@ -202,17 +199,12 @@ Value *primitiveCdr(Value *args) {
     if (lst->type != CONS_TYPE) {
         evaluationError(11);
     }
-    Value *result_val = lst;
-    while (car(result_val)->type == CONS_TYPE) {
-        result_val = car(result_val);
-    }
-    
-    result_val = cdr(result_val);
-    
-    return result_val;
+    // Returns the cdr of the first argument
+    return cdr(lst);
 }
 
 Value *primitiveCons(Value *args) {
+    // Must have two arguments
     if (args->type == NULL_TYPE) {
         evaluationError(10);
     }
@@ -222,19 +214,25 @@ Value *primitiveCons(Value *args) {
     if (cdr(args)->type == NULL_TYPE) {
         evaluationError(10);
     }
-    if (cdr(cdr(args))->type != NULL_TYPE) {
+    
+    // If there exists a third argument, throw an Error
+    if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
         evaluationError(10);
     }
-    
+    //The first argument to put in cons cell will always be car(args)
     Value *arg1 = car(args);
-    Value *arg2 = car(cdr(args));
+    Value *arg2;
     
-    if (arg1->type == CONS_TYPE) {
-        arg1 = car(arg1);
+    
+    if (cdr(args)->type == CONS_TYPE) {
+        arg2 = car(cdr(args));
     }
-    
-    Value *result_val = cons(arg1, car(arg2));
-    return cons(result_val, makeNull());
+    // If the cdr of args isn't a Cons type, we simply set arg2 as the cdr
+    else {
+        arg2 = cdr(args);
+    }
+    Value *result_val = cons(arg1, arg2);
+    return result_val;
 }
 
 void bind(char *name, Value *(*function)(struct Value *), Frame *frame) {
@@ -305,6 +303,9 @@ void interpret(Value *tree) {
                 break;
             case PRIMITIVE_TYPE:
                 printf("#<procedure>\n");
+                break;
+            case NULL_TYPE:
+                printf("()\n");
                 break;
         }
         tree = cdr(tree);
