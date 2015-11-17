@@ -1,0 +1,24 @@
+(define my-map
+  (lambda (fun lst)
+    (if (null? lst)
+        (quote ())
+        (cons (fun (car lst)) (my-map fun (cdr lst))))))
+
+(define add-one
+  (lambda (x)
+    (+ x 1)))
+
+(define my-foldr
+  (lambda (fun x lst)
+    (if (null? lst)
+        x
+        (fun (car lst) (my-foldr fun x (cdr lst))))))
+
+(define my-foldl
+  (lambda (fun x lst)
+    (if (null? lst)
+        x
+        (my-foldl fun (fun (car lst) x) (cdr lst)))))
+
+(my-map add-one (quote (1 2 3)))
+(my-foldr + 2 (quote (1 2 3)))

@@ -512,8 +512,6 @@ Value *evalLambda(Value *args, Frame *frame) {
 
 // Eval block
 Value *eval(Value *tree, Frame *frame) {
-//    printVal(tree);
-//    printf("\n");
     Value *result;
     switch (tree->type) {
         // For int, bool, double, and string type, we simply return tree
@@ -562,8 +560,8 @@ Value *eval(Value *tree, Frame *frame) {
                 }
                 
                 else {
-                    // If not a special form, evaluate the first, evaluate the args, then
-                    // apply the first to the args.
+                    // If not a special form, evaluate the first
+                    // evaluate the args, then apply the first to the args.
                     Value *evaledOperator = eval(first_arg, frame);
                     Value *evaledArgs = evalEach(args, frame);
                     return apply(evaledOperator, evaledArgs);
