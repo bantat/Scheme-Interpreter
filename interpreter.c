@@ -53,6 +53,9 @@ void evaluationError(int error) {
     else if (error == 11) {
         printf("Car and Cdr require a list as an argument\n");
     }
+    else if (error == 12) {
+        printf("Invalid arguments for let statement\n");
+    }
     texit(1);
 }
 
@@ -150,6 +153,29 @@ Value *primitiveAdd(Value *args) {
     return result_val;
 }
 
+Value *primitiveMultiply(Value *args) {
+    float result = 1;
+    while (args->type != NULL_TYPE) {
+        Value *cur_node = car(args);
+        if (cur_node->type != INT_TYPE) {
+            if (cur_node->type != DOUBLE_TYPE) {
+                evaluationError(10);
+            }
+            result = result * cur_node->d;
+            args = cdr(args);
+        }
+        else {
+            result = result * cur_node->i;
+            args = cdr(args);
+        }
+    }
+    Value *result_val = talloc(sizeof(Value));
+    result_val->type = DOUBLE_TYPE;
+    result_val->d = result;
+    return result_val;
+}
+
+
 Value *primitiveNull(Value *args) {
     // The argument passed should not be empty
     if (args->type == NULL_TYPE) {
@@ -235,6 +261,317 @@ Value *primitiveCons(Value *args) {
     return result_val;
 }
 
+Value *primitiveEquals(Value *args) {
+    if (args->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (car(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
+        evaluationError(10);
+    }
+    
+    float arg1;
+    float arg2;
+    
+    if (car(args)->type == INT_TYPE) {
+        Value *argument = car(args);
+        arg1 = (float) argument->i;
+    }
+    else if (car(args)->type == DOUBLE_TYPE) {
+        Value *argument = car(args);
+        arg1 = argument->d;
+    }
+    else {
+        evaluationError(10);
+    }
+    
+    if (car(cdr(args))->type == INT_TYPE) {
+        Value *argument1 = car(cdr(args));
+        arg2 = (float) argument1->i;
+    }
+    else if (car(cdr(args))->type == DOUBLE_TYPE) {
+        Value *argument1 = car(cdr(args));
+        arg2 = argument1->d;
+    }
+    else {
+        evaluationError(10);
+    }
+    
+    if (arg1 == arg2) {
+        return trueVal();
+    }
+    else {
+        return falseVal();
+    }
+}
+
+Value *primitiveGreaterThan(Value *args) {
+    if (args->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (car(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
+        evaluationError(10);
+    }
+    
+    float arg1;
+    float arg2;
+    
+    if (car(args)->type == INT_TYPE) {
+        Value *argument = car(args);
+        arg1 = (float) argument->i;
+    }
+    else if (car(args)->type == DOUBLE_TYPE) {
+        Value *argument = car(args);
+        arg1 = argument->d;
+    }
+    else {
+        evaluationError(10);
+    }
+    
+    if (car(cdr(args))->type == INT_TYPE) {
+        Value *argument1 = car(cdr(args));
+        arg2 = (float) argument1->i;
+    }
+    else if (car(cdr(args))->type == DOUBLE_TYPE) {
+        Value *argument1 = car(cdr(args));
+        arg2 = argument1->d;
+    }
+    else {
+        evaluationError(10);
+    }
+    
+    if (arg1 > arg2) {
+        return trueVal();
+    }
+    else {
+        return falseVal();
+    }
+}
+
+Value *primitiveLessThan(Value *args) {
+    if (args->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (car(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
+        evaluationError(10);
+    }
+    
+    float arg1;
+    float arg2;
+    
+    if (car(args)->type == INT_TYPE) {
+        Value *argument = car(args);
+        arg1 = (float) argument->i;
+    }
+    else if (car(args)->type == DOUBLE_TYPE) {
+        Value *argument = car(args);
+        arg1 = argument->d;
+    }
+    else {
+        evaluationError(10);
+    }
+    
+    if (car(cdr(args))->type == INT_TYPE) {
+        Value *argument1 = car(cdr(args));
+        arg2 = (float) argument1->i;
+    }
+    else if (car(cdr(args))->type == DOUBLE_TYPE) {
+        Value *argument1 = car(cdr(args));
+        arg2 = argument1->d;
+    }
+    else {
+        evaluationError(10);
+    }
+    
+    if (arg1 < arg2) {
+        return trueVal();
+    }
+    else {
+        return falseVal();
+    }
+}
+
+Value *primitiveDivide(Value *args) {
+    if (args->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (car(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
+        evaluationError(10);
+    }
+    
+    float arg1;
+    int arg_1 = NULL;
+    
+    float arg2;
+    int arg_2 = NULL;
+    
+    if (car(args)->type == INT_TYPE) {
+        Value *argument = car(args);
+        arg1 = (float) argument->i;
+        arg_1 = argument->i; 
+    }
+    else if (car(args)->type == DOUBLE_TYPE) {
+        Value *argument = car(args);
+        arg1 = argument->d;
+    }
+    else {
+        evaluationError(10);
+    }
+    
+    if (car(cdr(args))->type == INT_TYPE) {
+        Value *argument1 = car(cdr(args));
+        arg2 = (float) argument1->i;
+        arg_2 = argument1->i;
+    }
+    else if (car(cdr(args))->type == DOUBLE_TYPE) {
+        Value *argument1 = car(cdr(args));
+        arg2 = argument1->d;
+    }
+    else {
+        evaluationError(10);
+    }
+    if (arg_1 != NULL && arg_2 != NULL) {
+        int result = arg_1/arg_2;
+        
+        Value *result_val = talloc(sizeof(Value));
+        result_val->type = INT_TYPE;
+        result_val->i = result;
+    
+        return result_val;
+    }
+        
+    float result = arg1/arg2;
+    
+    Value *result_val = talloc(sizeof(Value));
+    result_val->type = DOUBLE_TYPE;
+    result_val->d = result;
+    
+    return result_val;
+}
+
+Value *primitiveModulo(Value *args) {
+    if (args->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (car(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == NULL_TYPE) {
+        evaluationError(10);
+    }
+    if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
+        evaluationError(10);
+    }
+    
+    int arg1;
+    int arg2;
+    
+    if (car(args)->type == INT_TYPE) {
+        if (car(cdr(args))->type == INT_TYPE) {
+            Value *argument = car(args);
+            arg1 = argument->i; 
+            Value *argument1 = car(cdr(args));
+            arg2 = argument1->i;
+            
+            int result = arg1 % arg2;
+        
+            Value *result_val = talloc(sizeof(Value));
+            result_val->type = INT_TYPE;
+            result_val->i = result;
+    
+            return result_val;  
+        }
+        else {
+            evaluationError(10);
+        }
+    }
+
+    else {
+        evaluationError(10);
+    }
+    
+    return falseVal();
+}
+
+Value *primitiveGreaterOrEqual(Value *args) {
+    Value *bool_val = primitiveLessThan(args);
+    if (bool_val->i == 0) {
+        return trueVal();
+    }
+    else {
+        return falseVal();
+    }
+}
+
+Value *primitiveLessOrEqual(Value *args) {
+    Value *bool_val = primitiveGreaterThan(args);
+    if (bool_val->i == 0) {
+        return trueVal();
+    }
+    else {
+        return falseVal();
+    }
+}
+
+Value *primitiveSubtract(Value *args) {
+    float result = 0;
+    
+    Value *cur_node = car(args);
+    if (cur_node->type != INT_TYPE) {
+        if (cur_node->type != DOUBLE_TYPE) {
+            evaluationError(10);
+        }
+        result = result + cur_node->d;
+        args = cdr(args);
+    }
+    else {
+        result = result + cur_node->i;
+        args = cdr(args);
+    }
+    
+    while (args->type != NULL_TYPE) {
+        Value *cur_node = car(args);
+        if (cur_node->type != INT_TYPE) {
+            if (cur_node->type != DOUBLE_TYPE) {
+                evaluationError(10);
+            }
+            result = result - cur_node->d;
+            args = cdr(args);
+        }
+        else {
+            result = result - cur_node->i;
+            args = cdr(args);
+        }
+    }
+    Value *result_val = talloc(sizeof(Value));
+    result_val->type = DOUBLE_TYPE;
+    result_val->d = result;
+    return result_val;
+}
+
 void bind(char *name, Value *(*function)(struct Value *), Frame *frame) {
     // Add primitive functions to top-level bindings list
     Value *fun_val = talloc(sizeof(Value));
@@ -259,6 +596,15 @@ void interpret(Value *tree) {
     global->bindings = makeNull();
     
     bind("+", primitiveAdd, global);
+    bind("-", primitiveSubtract, global);
+    bind("*", primitiveMultiply, global);
+    bind("/", primitiveDivide, global);
+    bind(">", primitiveGreaterThan, global);
+    bind("<", primitiveLessThan, global);
+    bind(">=", primitiveGreaterOrEqual, global);
+    bind("<=", primitiveLessOrEqual, global);
+    bind("=", primitiveEquals, global);
+    bind("modulo", primitiveModulo, global);
     bind("null?", primitiveNull, global);
     bind("car", primitiveCar, global);
     bind("cdr", primitiveCdr, global);
@@ -405,7 +751,83 @@ Value *evalLet(Value *args, Frame *frame) {
             val = cons(symbol_val, val);
         }
         else {
-            texit(1);
+            evaluationError(12);
+        }
+        new_bindings = cons(val, new_bindings);
+        
+        // Iterative step to set up next var and value pair
+        cur_node = cdr(cur_node);
+    }
+    
+    new_frame->bindings = new_bindings;
+    
+    // Eval in new frame with new bindings
+    return eval(car(cdr(args)), new_frame);
+}
+
+Value *evalLetStar(Value *args, Frame *frame) {
+    Frame *cur_frame = frame;
+    
+    Value *cur_node = car(args);
+    // Check valid input structure
+    if (car(cur_node)->type != CONS_TYPE) {
+        evaluationError(2);
+    }
+    // Iterate through arguments...
+    while (cur_node->type != NULL_TYPE) {
+        Value *new_binding = makeNull();
+        // Sets up singular var and value pair
+        Value *node_to_eval = car(cdr(car(cur_node)));
+        Value *pointer = eval(node_to_eval, cur_frame);
+ 
+        Value *val = cons(pointer, makeNull());
+        Value *symbol_val = car(car(cur_node));
+        if (symbol_val->type == SYMBOL_TYPE) {
+            val = cons(symbol_val, val);
+        }
+        else {
+            evaluationError(12);
+        }
+        new_binding = cons(val, new_binding);
+        
+        Frame *new_frame = talloc(sizeof(Frame));
+        new_frame->parent = cur_frame;
+        new_frame->bindings = new_binding;
+        
+        // Iterative step to set up next var and value pair
+        cur_frame = new_frame;
+        cur_node = cdr(cur_node);
+    }
+    
+    // Eval in new frame with new bindings
+    return eval(car(cdr(args)), cur_frame);
+}
+
+Value *evalLetRec(Value *args, Frame *frame) {
+    // Create new frame and set input frame to be parent frame
+    Frame *new_frame = talloc(sizeof(Frame));
+    new_frame->parent = frame;
+    // Create new linked list to store bindings created in let statement
+    Value *new_bindings = makeNull();
+    
+    Value *cur_node = car(args);
+    // Check valid input structure
+    if (car(cur_node)->type != CONS_TYPE) {
+        evaluationError(2);
+    }
+    // Iterate through arguments...
+    while (cur_node->type != NULL_TYPE) {
+        // Sets up singular var and value pair
+        Value *node_to_eval = car(cdr(car(cur_node)));
+        Value *pointer = eval(node_to_eval, new_frame);
+ 
+        Value *val = cons(pointer,makeNull());
+        Value *symbol_val = car(car(cur_node));
+        if (symbol_val->type == SYMBOL_TYPE) {
+            val = cons(symbol_val, val);
+        }
+        else {
+            evaluationError(12);
         }
         new_bindings = cons(val, new_bindings);
         
@@ -545,6 +967,14 @@ Value *eval(Value *tree, Frame *frame) {
 
                 else if (strcmp(first_arg->s, "let") == 0) {
                     result = evalLet(args, frame);
+                }
+                
+                else if (strcmp(first_arg->s, "let*") == 0) {
+                    result = evalLetStar(args, frame);
+                }
+                
+                else if (strcmp(first_arg->s, "letrec") == 0) {
+                    result = evalLetRec(args, frame);
                 }
 
                 else if (strcmp(first_arg->s, "quote") == 0) {
