@@ -56,6 +56,9 @@ void evaluationError(int error) {
     else if (error == 12) {
         printf("Invalid arguments for let statement\n");
     }
+    else if (error == 13) {
+        printf("Invalid input for COND, AND or OR, boolean expressions required\n");
+    }
     texit(1);
 }
 
@@ -932,6 +935,121 @@ Value *evalLambda(Value *args, Frame *frame) {
     return closure;
 }
 
+Value *evalSet(Value *args, Frame *frame) {
+    Value *symbol = car(args);
+    Value *new_val = eval(car(cdr(args)), frame);
+    
+    // Searches for symbol in each frame above input frame
+    while (frame != NULL) {
+        Value *bindings = frame->bindings;
+        // While loop in case bindings member of frame not assigned
+        while (bindings == NULL) {
+            if (frame->parent == NULL) {
+                evaluationError(3);
+            }
+            frame = frame->parent;
+            bindings = frame->bindings;
+        }
+        // Iterates through bindings...
+        while ((*bindings).type != NULL_TYPE) {
+            Value *symbol1_cons = car(bindings);
+            Value *symbol1 = car(symbol1_cons);
+            assert(symbol1->type == SYMBOL_TYPE);
+            // Checks if string member of binding matches that of input symbol
+            if (strcmp((*symbol1).s, (*symbol).s) == 0) {
+                struct ConsCell cons_cell = symbol1_cons->c;
+                cons_cell.cdr = cons(new_val, makeNull());
+                symbol1_cons->c = cons_cell;
+                
+                Value *void_val = talloc(sizeof(Value));
+                void_val->type = VOID_TYPE;
+                return void_val;
+            }
+            // Otherwise continues search
+            else {
+                bindings = cdr(bindings);
+            }
+        }
+        frame = frame->parent;
+    }
+    // If symbol not found, print evaluation error and exit
+    evaluationError(3);
+    return symbol;
+}
+
+Value *evalBegin(Value *args, Frame *frame) {
+    Value *evaledArgs = evalEach(args, frame);
+    
+    Value *cur_val = evaledArgs;
+    while (cur_val->type != NULL_TYPE) {
+        if (cdr(cur_val)->type == NULL_TYPE) {
+            return car(cur_val);
+        }
+        else {
+            cur_val = cdr(cur_val);
+        }
+    }
+    Value *void_val = talloc(sizeof(Value));
+    void_val->type = VOID_TYPE;
+    return void_val;
+}
+
+Value *evalAnd(Value *args, Frame *frame) {
+    while (args->type != NULL_TYPE) {
+        Value *bool_val = eval(car(args), frame);
+        if (bool_val->type != BOOL_TYPE) {
+            evaluationError(13); //insert value
+        }
+        else if (bool_val->i == 0) {
+            return falseVal();
+        }
+        else {
+            args = cdr(args);
+        }
+    }
+    return trueVal();
+}
+
+Value *evalCond(Value *args, Frame *frame) {
+    while (args->type != NULL_TYPE) {
+        Value *bool_val;
+        if (strcmp(car(car(args))->s, "else") == 0) {
+            bool_val = trueVal();
+        }
+        else {
+            bool_val = eval(car(car(args)), frame);
+        }
+        if (bool_val->type != BOOL_TYPE) {
+            evaluationError(13);
+        }
+        else if (bool_val->i == 1) {
+            return eval(car(cdr(car(args))), frame);
+        }
+        else {
+            args = cdr(args);
+        }
+    }
+    Value *void_val = talloc(sizeof(Value));
+    void_val->type = VOID_TYPE;
+    return void_val;
+}
+
+Value *evalOr(Value *args, Frame *frame) {
+    while (args->type != NULL_TYPE) {
+        Value *bool_val = eval(car(args), frame);
+        if (bool_val->type != BOOL_TYPE) {
+            evaluationError(13); //insert value
+        }
+        else if (bool_val->i == 1) {
+            return trueVal();
+        }
+        else {
+            args = cdr(args);
+        }
+    }
+    return falseVal();
+}
+
 // Eval block
 Value *eval(Value *tree, Frame *frame) {
     Value *result;
@@ -987,6 +1105,26 @@ Value *eval(Value *tree, Frame *frame) {
 
                 else if (strcmp(first_arg->s, "lambda") == 0) {
                     result = evalLambda(args, frame);
+                }
+                
+                else if (strcmp(first_arg->s, "set!") == 0) {
+                    result = evalSet(args, frame);
+                }
+                
+                else if (strcmp(first_arg->s, "begin") == 0) {
+                    result = evalBegin(args, frame);
+                }
+                
+                else if (strcmp(first_arg->s, "and") == 0) {
+                    result = evalAnd(args, frame);
+                }
+                
+                else if (strcmp(first_arg->s, "or") == 0) {
+                    result = evalOr(args, frame);
+                }
+                
+                else if (strcmp(first_arg->s, "cond") == 0) {
+                    result = evalCond(args, frame);
                 }
                 
                 else {

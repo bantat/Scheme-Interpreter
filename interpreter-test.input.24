@@ -1,0 +1,11 @@
+(define x 3)
+(begin
+  (set! x (+ x 1))
+  (+ x x))
+
+(begin)
+(- x 2)
+
+(and #f #f #t)
+
+(or #f #f #t)

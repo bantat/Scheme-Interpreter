@@ -1,0 +1,8 @@
+(define flip-flop
+  (let ((state #f))
+    (lambda ()
+      (begin
+	(set! state #t)
+      	state))))
+
+(flip-flop)
