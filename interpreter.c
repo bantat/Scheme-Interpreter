@@ -59,6 +59,9 @@ void evaluationError(int error) {
     else if (error == 13) {
         printf("Invalid input for COND, AND or OR, boolean expressions required\n");
     }
+    else if (error == 14) {
+        printf("Invalid symbol for COND statement\n");
+    }
     texit(1);
 }
 
@@ -265,6 +268,7 @@ Value *primitiveCons(Value *args) {
 }
 
 Value *primitiveEquals(Value *args) {
+    // Must have two arguments
     if (args->type == NULL_TYPE) {
         evaluationError(10);
     }
@@ -274,13 +278,16 @@ Value *primitiveEquals(Value *args) {
     if (cdr(args)->type == NULL_TYPE) {
         evaluationError(10);
     }
+    // If there exists a third argument, throw an Error
     if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
         evaluationError(10);
     }
     
+    // Create float versions of two args for comparison
     float arg1;
     float arg2;
     
+    // Assign an int or double to float for comparison
     if (car(args)->type == INT_TYPE) {
         Value *argument = car(args);
         arg1 = (float) argument->i;
@@ -305,6 +312,7 @@ Value *primitiveEquals(Value *args) {
         evaluationError(10);
     }
     
+    // Perform comparison and return corresponding boolean
     if (arg1 == arg2) {
         return trueVal();
     }
@@ -314,6 +322,7 @@ Value *primitiveEquals(Value *args) {
 }
 
 Value *primitiveGreaterThan(Value *args) {
+    // Must have two arguments
     if (args->type == NULL_TYPE) {
         evaluationError(10);
     }
@@ -323,13 +332,16 @@ Value *primitiveGreaterThan(Value *args) {
     if (cdr(args)->type == NULL_TYPE) {
         evaluationError(10);
     }
+    // If there exists a third argument, throw an Error
     if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
         evaluationError(10);
     }
     
+    // Create float versions of two args for comparison
     float arg1;
     float arg2;
     
+    // Assign an int or double to float for comparison
     if (car(args)->type == INT_TYPE) {
         Value *argument = car(args);
         arg1 = (float) argument->i;
@@ -354,6 +366,7 @@ Value *primitiveGreaterThan(Value *args) {
         evaluationError(10);
     }
     
+    // Perform comparison and return corresponding boolean
     if (arg1 > arg2) {
         return trueVal();
     }
@@ -363,6 +376,7 @@ Value *primitiveGreaterThan(Value *args) {
 }
 
 Value *primitiveLessThan(Value *args) {
+    // Must have two arguments
     if (args->type == NULL_TYPE) {
         evaluationError(10);
     }
@@ -372,13 +386,16 @@ Value *primitiveLessThan(Value *args) {
     if (cdr(args)->type == NULL_TYPE) {
         evaluationError(10);
     }
+    // If there exists a third argument, throw an Error
     if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
         evaluationError(10);
     }
     
+    // Create float versions of two args for comparison
     float arg1;
     float arg2;
     
+    // Assign an int or double to float for comparison
     if (car(args)->type == INT_TYPE) {
         Value *argument = car(args);
         arg1 = (float) argument->i;
@@ -403,6 +420,7 @@ Value *primitiveLessThan(Value *args) {
         evaluationError(10);
     }
     
+    // Perform comparison and return corresponding boolean
     if (arg1 < arg2) {
         return trueVal();
     }
@@ -412,6 +430,7 @@ Value *primitiveLessThan(Value *args) {
 }
 
 Value *primitiveDivide(Value *args) {
+    // Must have two arguments
     if (args->type == NULL_TYPE) {
         evaluationError(10);
     }
@@ -421,16 +440,19 @@ Value *primitiveDivide(Value *args) {
     if (cdr(args)->type == NULL_TYPE) {
         evaluationError(10);
     }
+    // If there exists a third argument, throw an Error
     if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
         evaluationError(10);
     }
     
+    // Create int and float versions for each argument
     float arg1;
     int arg_1 = NULL;
     
     float arg2;
     int arg_2 = NULL;
     
+    // Assign based on type
     if (car(args)->type == INT_TYPE) {
         Value *argument = car(args);
         arg1 = (float) argument->i;
@@ -456,7 +478,10 @@ Value *primitiveDivide(Value *args) {
     else {
         evaluationError(10);
     }
+    
+    // Determine whether to perform integer or real division
     if (arg_1 != NULL && arg_2 != NULL) {
+        // Integer division
         int result = arg_1/arg_2;
         
         Value *result_val = talloc(sizeof(Value));
@@ -465,7 +490,8 @@ Value *primitiveDivide(Value *args) {
     
         return result_val;
     }
-        
+    
+    // Else, real division
     float result = arg1/arg2;
     
     Value *result_val = talloc(sizeof(Value));
@@ -476,6 +502,7 @@ Value *primitiveDivide(Value *args) {
 }
 
 Value *primitiveModulo(Value *args) {
+    // Must take two arguments
     if (args->type == NULL_TYPE) {
         evaluationError(10);
     }
@@ -485,13 +512,16 @@ Value *primitiveModulo(Value *args) {
     if (cdr(args)->type == NULL_TYPE) {
         evaluationError(10);
     }
+    // If third argument exists, throw an error
     if (cdr(args)->type == CONS_TYPE && cdr(cdr(args))->type != NULL_TYPE) {
         evaluationError(10);
     }
     
+    // Declare integer arguments for arithmetic operation
     int arg1;
     int arg2;
     
+    // Check type of arguments
     if (car(args)->type == INT_TYPE) {
         if (car(cdr(args))->type == INT_TYPE) {
             Value *argument = car(args);
@@ -499,6 +529,7 @@ Value *primitiveModulo(Value *args) {
             Value *argument1 = car(cdr(args));
             arg2 = argument1->i;
             
+            // Perform modular arithmetic and return result
             int result = arg1 % arg2;
         
             Value *result_val = talloc(sizeof(Value));
@@ -515,11 +546,12 @@ Value *primitiveModulo(Value *args) {
     else {
         evaluationError(10);
     }
-    
+    // Never reaches here
     return falseVal();
 }
 
 Value *primitiveGreaterOrEqual(Value *args) {
+    // Returns the opposite boolean value of the opposite arithmetic function
     Value *bool_val = primitiveLessThan(args);
     if (bool_val->i == 0) {
         return trueVal();
@@ -530,6 +562,7 @@ Value *primitiveGreaterOrEqual(Value *args) {
 }
 
 Value *primitiveLessOrEqual(Value *args) {
+    // Returns the opposite boolean value of the opposite arithmetic function
     Value *bool_val = primitiveGreaterThan(args);
     if (bool_val->i == 0) {
         return trueVal();
@@ -540,8 +573,10 @@ Value *primitiveLessOrEqual(Value *args) {
 }
 
 Value *primitiveSubtract(Value *args) {
+    // Create result to return
     float result = 0;
     
+    // Add first argument to result
     Value *cur_node = car(args);
     if (cur_node->type != INT_TYPE) {
         if (cur_node->type != DOUBLE_TYPE) {
@@ -555,6 +590,7 @@ Value *primitiveSubtract(Value *args) {
         args = cdr(args);
     }
     
+    // And subtract subsequent arguments
     while (args->type != NULL_TYPE) {
         Value *cur_node = car(args);
         if (cur_node->type != INT_TYPE) {
@@ -569,6 +605,7 @@ Value *primitiveSubtract(Value *args) {
             args = cdr(args);
         }
     }
+    // Return value of result
     Value *result_val = talloc(sizeof(Value));
     result_val->type = DOUBLE_TYPE;
     result_val->d = result;
@@ -978,9 +1015,11 @@ Value *evalSet(Value *args, Frame *frame) {
 }
 
 Value *evalBegin(Value *args, Frame *frame) {
+    // Evaluates every argument
     Value *evaledArgs = evalEach(args, frame);
     
     Value *cur_val = evaledArgs;
+    // Goes through linked list to retrieve the final value and return it
     while (cur_val->type != NULL_TYPE) {
         if (cdr(cur_val)->type == NULL_TYPE) {
             return car(cur_val);
@@ -989,12 +1028,14 @@ Value *evalBegin(Value *args, Frame *frame) {
             cur_val = cdr(cur_val);
         }
     }
+    // Void Value used as stand in if the Begin isn't passed any arguments
     Value *void_val = talloc(sizeof(Value));
     void_val->type = VOID_TYPE;
     return void_val;
 }
 
 Value *evalAnd(Value *args, Frame *frame) {
+    // Searches through arguments, and returns false if any are false
     while (args->type != NULL_TYPE) {
         Value *bool_val = eval(car(args), frame);
         if (bool_val->type != BOOL_TYPE) {
@@ -1007,40 +1048,52 @@ Value *evalAnd(Value *args, Frame *frame) {
             args = cdr(args);
         }
     }
+    // Returns true if all values are true
     return trueVal();
 }
 
 Value *evalCond(Value *args, Frame *frame) {
     while (args->type != NULL_TYPE) {
         Value *bool_val;
+        // If the argument is a symbol, test if it is else
         if (car(car(args))->type == SYMBOL_TYPE) {
             if (strcmp(car(car(args))->s, "else") == 0) {
+                // else sets the boolean to true
                 bool_val = trueVal();
+            }
+            else {
+                evaluationError(14);
             }
         }
         else {
+            // Need to evaluate otherwise
             bool_val = eval(car(car(args)), frame);
         }
         if (bool_val->type != BOOL_TYPE) {
             evaluationError(13);
         }
         else if (bool_val->i == 1) {
+            // Return the accompanying code if the bool is true
             return eval(car(cdr(car(args))), frame);
         }
         else {
+            // Otherwise, move down list
             args = cdr(args);
         }
     }
+    // If nothing is true, we return a void Value
     Value *void_val = talloc(sizeof(Value));
     void_val->type = VOID_TYPE;
     return void_val;
 }
 
 Value *evalOr(Value *args, Frame *frame) {
+    // If there is a true in argument list, return true
     while (args->type != NULL_TYPE) {
         Value *bool_val = eval(car(args), frame);
         if (bool_val->type != BOOL_TYPE) {
-            evaluationError(13); //insert value
+            // Error if the argument doesn't resolve to a boolean
+            evaluationError(13); 
         }
         else if (bool_val->i == 1) {
             return trueVal();
@@ -1049,6 +1102,7 @@ Value *evalOr(Value *args, Frame *frame) {
             args = cdr(args);
         }
     }
+    // Return false if the arguments are all false
     return falseVal();
 }
 
