@@ -62,6 +62,9 @@ void evaluationError(int error) {
     else if (error == 14) {
         printf("Invalid symbol for COND statement\n");
     }
+    else if (error == 15) {
+        printf("Multiplication requires at least two arguments\n");
+    }
     texit(1);
 }
 
@@ -105,6 +108,7 @@ void printVal(Value *input) {
 }
 
 Value *trueVal() {
+    // Function that returns a true boolean Value
     Value *true_val = talloc(sizeof(Value));
     true_val->type = BOOL_TYPE;
     true_val->i = 1;
@@ -112,6 +116,7 @@ Value *trueVal() {
 }
 
 Value *falseVal() {
+    // Function that returns a false boolean Value
     Value *false_val = talloc(sizeof(Value));
     false_val->type = BOOL_TYPE;
     false_val->i = 0;
@@ -119,30 +124,31 @@ Value *falseVal() {
 }
 
 Value *evalEach(Value *args, Frame *frame) {
+    // Evaluates every argument, and returns the list
     Value *cur_node = args;
     Value *evaled_args = makeNull();
     
     while (cur_node->type != NULL_TYPE) {
         Value *arg = car(cur_node);
-        
         Value *evaled_arg = eval(arg, frame);
         
         evaled_args = cons(evaled_arg, evaled_args);
-        
         cur_node = cdr(cur_node);
     }
-    
+    // Reverse list after cons created the evaluated list in reverse
     evaled_args = reverse(evaled_args);
     
     return evaled_args;
 }
 
 Value *primitiveAdd(Value *args) {
+    // Sets initial result value and add each succesive value in args list
     float result = 0;
     while (args->type != NULL_TYPE) {
         Value *cur_node = car(args);
         if (cur_node->type != INT_TYPE) {
             if (cur_node->type != DOUBLE_TYPE) {
+                // Throws error if the argument isn't a number
                 evaluationError(10);
             }
             result = result + cur_node->d;
@@ -160,20 +166,32 @@ Value *primitiveAdd(Value *args) {
 }
 
 Value *primitiveMultiply(Value *args) {
+    // Variables used to determine return value, and error status
     float result = 1;
+    int number_of_args = 0;
     while (args->type != NULL_TYPE) {
         Value *cur_node = car(args);
+        // Checks for int or double type
         if (cur_node->type != INT_TYPE) {
+            // Throws an error if the argument isn't a number
             if (cur_node->type != DOUBLE_TYPE) {
                 evaluationError(10);
             }
+            // Increments args, updates result
+            number_of_args++;
             result = result * cur_node->d;
             args = cdr(args);
         }
         else {
+            // Increments args, updates result
+            number_of_args++;
             result = result * cur_node->i;
             args = cdr(args);
         }
+    }
+    // Throws an error if there are less than 2 arguments
+    if (number_of_args < 2) {
+        evaluationError(15);
     }
     Value *result_val = talloc(sizeof(Value));
     result_val->type = DOUBLE_TYPE;
