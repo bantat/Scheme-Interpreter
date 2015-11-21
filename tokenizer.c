@@ -342,6 +342,8 @@ Value *tokenize() {
                     for (int i = 1; token[i] != '\0'; i++) {
                         utoken[i-1] = token[i];
                     }
+                    int index = strlen(token) - 2;
+                    utoken[index] = '\0';
                     // If the token is a signed int of decimal
                     if (is_uinteger(utoken)) {
                         Value *int_val = talloc(sizeof(Value));

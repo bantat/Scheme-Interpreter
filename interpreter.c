@@ -1013,8 +1013,10 @@ Value *evalAnd(Value *args, Frame *frame) {
 Value *evalCond(Value *args, Frame *frame) {
     while (args->type != NULL_TYPE) {
         Value *bool_val;
-        if (strcmp(car(car(args))->s, "else") == 0) {
-            bool_val = trueVal();
+        if (car(car(args))->type == SYMBOL_TYPE) {
+            if (strcmp(car(car(args))->s, "else") == 0) {
+                bool_val = trueVal();
+            }
         }
         else {
             bool_val = eval(car(car(args)), frame);

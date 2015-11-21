@@ -1,5 +1,5 @@
 (cond
    ((> -5 0) "doesn't get here")
-   ((= 0 -5) "doesn't get here, either")
-   ((< 5 0) #t)
-   (else #f))
+   ((= 0 5) "doesn't get here, either")
+   ((= 0 7)  #t)
+   (else 3))
