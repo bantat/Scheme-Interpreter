@@ -1,3 +1,4 @@
-In addition to the primitive and special forms, we also implemented "<=" and ">=". 
+This project is a rough interpreter for the functional programming language Scheme, developed for CS251 - Programming Language Design and Implementation
 
-Hope we did you proud graders
+By Tore Banta and Charlie Sarano
+With thanks to Dave Musicant
